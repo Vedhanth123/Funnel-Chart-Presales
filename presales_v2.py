@@ -9,7 +9,7 @@ import json
 st.set_page_config(page_title="Pre-Sales Funnel Dashboard", layout="wide")
 
 # Define funnel stages
-FUNNEL_STAGES = [
+DEFAULT_FUNNEL_STAGES = [
     "Research",
     "Initial Contact", 
     "First Presentation",
@@ -21,8 +21,20 @@ FUNNEL_STAGES = [
     "Closed Lost"
 ]
 
+# Initialize custom stages in session state
+if 'custom_stages' not in st.session_state:
+    st.session_state.custom_stages = [
+        "Government Approval",
+        "Legal Review",
+        "Compliance Check",
+        "Budget Approval"
+    ]
+
+# Combine default and custom stages
+FUNNEL_STAGES = DEFAULT_FUNNEL_STAGES + st.session_state.custom_stages
+
 # Color mapping for stages
-STAGE_COLORS = {
+DEFAULT_STAGE_COLORS = {
     "Research": "#FF6B6B",
     "Initial Contact": "#4ECDC4", 
     "First Presentation": "#45B7D1",
@@ -33,6 +45,33 @@ STAGE_COLORS = {
     "Closed Won": "#6BCF7F",
     "Closed Lost": "#FF7675"
 }
+
+# Custom stage colors
+CUSTOM_STAGE_COLORS = {
+    "Government Approval": "#FF8C42",
+    "Legal Review": "#6C5CE7",
+    "Compliance Check": "#A29BFE",
+    "Budget Approval": "#FD79A8"
+}
+
+# Generate colors for any additional custom stages
+def get_stage_color(stage):
+    if stage in DEFAULT_STAGE_COLORS:
+        return DEFAULT_STAGE_COLORS[stage]
+    elif stage in CUSTOM_STAGE_COLORS:
+        return CUSTOM_STAGE_COLORS[stage]
+    else:
+        # Generate a color based on stage name hash
+        import hashlib
+        hash_object = hashlib.md5(stage.encode())
+        hex_dig = hash_object.hexdigest()
+        return f"#{hex_dig[:6]}"
+
+STAGE_COLORS = {**DEFAULT_STAGE_COLORS, **CUSTOM_STAGE_COLORS}
+# Add colors for any additional custom stages
+for stage in st.session_state.custom_stages:
+    if stage not in STAGE_COLORS:
+        STAGE_COLORS[stage] = get_stage_color(stage)
 
 # Initialize session state
 if 'clients_data' not in st.session_state:
@@ -75,7 +114,49 @@ if 'selected_stage' not in st.session_state:
 if 'current_page' not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-def create_interactive_funnel_chart(df):
+def create_stage_selector_with_custom(key_suffix="", current_stage=None):
+    """Create a stage selector with custom stage option"""
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        # Add "Add Custom Stage" option to the list
+        stage_options = FUNNEL_STAGES + ["➕ Add Custom Stage"]
+        
+        if current_stage and current_stage in FUNNEL_STAGES:
+            default_index = FUNNEL_STAGES.index(current_stage)
+        else:
+            default_index = 0
+            
+        selected_option = st.selectbox(
+            "Select Stage", 
+            stage_options,
+            index=default_index,
+            key=f"stage_selector_{key_suffix}"
+        )
+    
+    with col2:
+        custom_stage = None
+        if selected_option == "➕ Add Custom Stage":
+            custom_stage = st.text_input(
+                "Custom Stage Name", 
+                placeholder="e.g., Government Approval",
+                key=f"custom_stage_{key_suffix}"
+            )
+            
+            if custom_stage and st.button(f"Add '{custom_stage}'", key=f"add_custom_{key_suffix}"):
+                if custom_stage not in st.session_state.custom_stages:
+                    st.session_state.custom_stages.append(custom_stage)
+                    STAGE_COLORS[custom_stage] = get_stage_color(custom_stage)
+                    st.success(f"Added new stage: {custom_stage}")
+                    st.rerun()
+                else:
+                    st.warning("Stage already exists!")
+    
+    # Return the selected stage
+    if selected_option == "➕ Add Custom Stage":
+        return custom_stage if custom_stage else None
+    else:
+        return selected_option
     """Create interactive funnel visualization"""
     stage_counts = df['Stage'].value_counts()
     
@@ -213,12 +294,10 @@ def display_stage_clients(df, stage):
                     st.write(f"Updated: {row['Last Updated']}")
                 
                 with col4:
-                    new_stage = st.selectbox(
-                        "Move to Stage", 
-                        FUNNEL_STAGES, 
-                        index=FUNNEL_STAGES.index(current_stage),
-                        key=f"stage_move_{idx}"
-                    )
+                    st.write("**Move to Stage:**")
+                    new_stage = create_stage_selector_with_custom(f"stage_move_{idx}", current_stage)
+                    if new_stage is None:
+                        new_stage = current_stage  # Keep current stage if no selection made
                 
                 with col5:
                     if st.button("Update", key=f"update_stage_{idx}"):
@@ -335,6 +414,61 @@ def main():
     elif st.session_state.current_page == "Client Management":
         st.header("Client Management")
         
+        # Custom Stage Management Section
+        with st.expander("🎯 Manage Custom Stages"):
+            st.subheader("Current Custom Stages")
+            
+            if st.session_state.custom_stages:
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    for i, stage in enumerate(st.session_state.custom_stages):
+                        col_stage, col_delete = st.columns([4, 1])
+                        with col_stage:
+                            stage_color = get_stage_color(stage)
+                            st.markdown(f"<span style='color: {stage_color}; font-weight: bold;'>●</span> {stage}", 
+                                      unsafe_allow_html=True)
+                        with col_delete:
+                            if st.button("🗑️", key=f"delete_stage_{i}", help=f"Delete {stage}"):
+                                # Check if any clients are in this stage
+                                clients_in_stage = len(df[df['Stage'] == stage])
+                                if clients_in_stage > 0:
+                                    st.error(f"Cannot delete '{stage}' - {clients_in_stage} clients are currently in this stage.")
+                                else:
+                                    st.session_state.custom_stages.remove(stage)
+                                    if stage in STAGE_COLORS:
+                                        del STAGE_COLORS[stage]
+                                    st.success(f"Deleted stage: {stage}")
+                                    st.rerun()
+                
+                with col2:
+                    st.info(f"**{len(st.session_state.custom_stages)}** custom stages")
+            else:
+                st.info("No custom stages added yet.")
+            
+            # Add new custom stage
+            st.subheader("Add New Custom Stage")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                new_custom_stage = st.text_input(
+                    "Stage Name", 
+                    placeholder="e.g., Government Approval, Legal Review, Compliance Check",
+                    key="new_custom_stage_input"
+                )
+            with col2:
+                if st.button("Add Stage", key="add_new_custom_stage"):
+                    if new_custom_stage:
+                        if new_custom_stage not in FUNNEL_STAGES:
+                            st.session_state.custom_stages.append(new_custom_stage)
+                            STAGE_COLORS[new_custom_stage] = get_stage_color(new_custom_stage)
+                            st.success(f"Added new stage: {new_custom_stage}")
+                            st.rerun()
+                        else:
+                            st.warning("Stage already exists!")
+                    else:
+                        st.error("Please enter a stage name.")
+        
+        st.markdown("---")
+        
         # Add new client
         with st.expander("Add New Client"):
             with st.form("add_client_form"):
@@ -346,11 +480,12 @@ def main():
                     new_email = st.text_input("Email")
                 
                 with col2:
-                    new_stage = st.selectbox("Stage", FUNNEL_STAGES)
+                    st.write("**Select Stage:**")
+                    new_stage = create_stage_selector_with_custom("add_form")
                     new_value = st.number_input("Deal Value ($)", min_value=0, value=0)
                 
                 if st.form_submit_button("Add Client"):
-                    if new_client and new_contact:
+                    if new_client and new_contact and new_stage:
                         new_row = pd.DataFrame({
                             'Client Name': [new_client],
                             'Stage': [new_stage],
@@ -362,6 +497,8 @@ def main():
                         st.session_state.clients_data = pd.concat([df, new_row], ignore_index=True)
                         st.success("Client added successfully!")
                         st.rerun()
+                    else:
+                        st.error("Please fill in all required fields including stage selection.")
         
         # Filter clients
         st.subheader("All Clients")
