@@ -151,12 +151,13 @@ def create_stage_selector_with_custom(key_suffix="", current_stage=None):
                     st.rerun()
                 else:
                     st.warning("Stage already exists!")
-    
-    # Return the selected stage
+      # Return the selected stage
     if selected_option == "➕ Add Custom Stage":
         return custom_stage if custom_stage else None
     else:
         return selected_option
+
+def create_interactive_funnel_chart(df):
     """Create interactive funnel visualization"""
     stage_counts = df['Stage'].value_counts()
     
