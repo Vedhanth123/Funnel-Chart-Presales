@@ -255,7 +255,8 @@ function renderFunnelChart() {
     label: `${stage}: ${stageCounts[stage]} clients`,
     value: stageCounts[stage],
     formattedValue: stageCounts[stage].toString(),
-    backgroundColor: stageColors[stage]
+    backgroundColor: stageColors[stage],
+    stage: stage // Store the original stage name for filtering
   }));
   
   // Clear previous chart
@@ -267,14 +268,18 @@ function renderFunnelChart() {
     chart: {
       width: chartContainer.offsetWidth,
       height: 400,
-      animate: 200
+      animate: 200,
+      curve: {
+        enabled: true
+      }
     },
     block: {
       dynamicHeight: true,
       minHeight: 15,
       fill: {
         type: 'solid'
-      }
+      },
+      highlight: true
     },
     tooltip: {
       enabled: true
@@ -282,6 +287,14 @@ function renderFunnelChart() {
     label: {
       format: '{l}',
       fontSize: '14px'
+    },
+    events: {
+      click: {
+        block: function(data) {
+          const stage = data.stage;
+          filterClientsByStage(stage);
+        }
+      }
     }
   };
   
@@ -289,8 +302,30 @@ function renderFunnelChart() {
   const funnel = new D3Funnel('#funnelChart');
   funnel.draw(data, options);
   
+  // Add a title/instruction above the funnel chart
+  const title = document.createElement('div');
+  title.className = 'chart-title';
+  title.textContent = 'Click on any stage to view clients';
+  chartContainer.insertBefore(title, chartContainer.firstChild);
+  
   // Update stats
   renderFunnelStats();
+}
+
+// Filter clients by stage when funnel section is clicked
+function filterClientsByStage(stage) {
+  // Update the stage filter dropdown
+  const filterStageSelect = document.getElementById('filterStage');
+  filterStageSelect.value = stage;
+  
+  // Create and dispatch a change event
+  const event = new Event('change');
+  filterStageSelect.dispatchEvent(event);
+  
+  // Scroll to the clients list
+  document.querySelector('.clients-container').scrollIntoView({ 
+    behavior: 'smooth' 
+  });
 }
 
 // Render funnel statistics

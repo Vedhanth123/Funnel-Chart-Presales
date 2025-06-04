@@ -66,7 +66,7 @@ if 'clients_data' not in st.session_state:
     })
 
 def create_funnel_chart(df):
-    """Create funnel visualization"""
+    """Create funnel visualization with click interactions"""
     stage_counts = df['Stage'].value_counts()
     
     # Reorder according to funnel stages
@@ -89,11 +89,16 @@ def create_funnel_chart(df):
     ))
     
     fig.update_layout(
-        title="Pre-Sales Funnel Overview",
+        title="Pre-Sales Funnel Overview (Click on a section to view clients)",
         height=600,
-        font=dict(size=12)
+        font=dict(size=12),
+        clickmode='event+select'
     )
     
+    # Make the chart interactive by adding custom data
+    for i, stage in enumerate(ordered_stages):
+        fig.data[0].customdata = ordered_stages
+        
     return fig
 
 def create_deal_value_chart(df):
@@ -124,7 +129,14 @@ def main():
     
     # Sidebar for navigation
     st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox("Choose a page", ["Dashboard", "Client Management", "Analytics"])
+    
+    # Use session state to maintain page selection across reruns
+    if "page" not in st.session_state:
+        st.session_state.page = "Dashboard"
+    
+    page = st.sidebar.selectbox("Choose a page", 
+                               ["Dashboard", "Client Management", "Analytics"],
+                               index=["Dashboard", "Client Management", "Analytics"].index(st.session_state.page))
     
     df = st.session_state.clients_data
     
@@ -155,13 +167,68 @@ def main():
         
         with col1:
             funnel_fig = create_funnel_chart(df)
-            st.plotly_chart(funnel_fig, use_container_width=True)
+            
+            # Create clickable funnel chart
+            selected_stage = None
+            clicked = st.plotly_chart(funnel_fig, use_container_width=True, key='funnel_chart')
+            
+            # Handle click events using session state
+            if "selected_stage" not in st.session_state:
+                st.session_state.selected_stage = None
+                
+            # Get click data
+            chart_data = st.session_state.get('plotly_click_data')
+            if chart_data:
+                clicked_stage = chart_data['points'][0]['y']
+                if st.session_state.selected_stage == clicked_stage:
+                    # Toggle off if same stage is clicked again
+                    st.session_state.selected_stage = None
+                else:
+                    st.session_state.selected_stage = clicked_stage
+                    
+                # Force a rerun to refresh the filtered clients
+                st.rerun()
         
         with col2:
             st.subheader("Stage Distribution")
             stage_counts = df['Stage'].value_counts()
             for stage, count in stage_counts.items():
                 st.write(f"**{stage}:** {count}")
+                
+        # Display filtered clients if a stage is selected
+        if st.session_state.selected_stage:
+            st.subheader(f"Clients in {st.session_state.selected_stage} Stage")
+            
+            filtered_clients = df[df['Stage'] == st.session_state.selected_stage]
+            
+            if not filtered_clients.empty:
+                for idx, row in filtered_clients.iterrows():
+                    with st.container():
+                        col1, col2, col3 = st.columns([2, 2, 1])
+                        
+                        with col1:
+                            st.write(f"**{row['Client Name']}**")
+                            st.write(f"Contact: {row['Contact Person']}")
+                        
+                        with col2:
+                            st.write(f"Email: {row['Email']}")
+                            st.write(f"Value: ${row['Deal Value']:,.0f}")
+                        
+                        with col3:
+                            if st.button("View Details", key=f"view_{idx}"):
+                                # Set session state to navigate to client management
+                                st.session_state.page = "Client Management"
+                                st.session_state.client_filter = row['Client Name']
+                                st.rerun()
+                        
+                        st.divider()
+            else:
+                st.info("No clients in this stage.")
+                
+            # Add a button to clear selection
+            if st.button("Clear Selection"):
+                st.session_state.selected_stage = None
+                st.rerun()
         
         # Deal value chart
         deal_fig = create_deal_value_chart(df)
@@ -203,9 +270,26 @@ def main():
         
         col1, col2 = st.columns(2)
         with col1:
-            stage_filter = st.multiselect("Filter by Stage", FUNNEL_STAGES, default=FUNNEL_STAGES)
+            # If we came from a funnel chart click, pre-filter by that stage
+            if "selected_stage" in st.session_state and st.session_state.selected_stage:
+                stage_filter = st.multiselect("Filter by Stage", 
+                                            FUNNEL_STAGES, 
+                                            default=[st.session_state.selected_stage])
+            else:
+                stage_filter = st.multiselect("Filter by Stage", 
+                                            FUNNEL_STAGES, 
+                                            default=FUNNEL_STAGES)
         with col2:
-            search_term = st.text_input("Search clients", placeholder="Enter client name...")
+            # If we have a client filter from funnel navigation
+            if "client_filter" in st.session_state and st.session_state.client_filter:
+                search_term = st.text_input("Search clients", 
+                                           value=st.session_state.client_filter,
+                                           placeholder="Enter client name...")
+                # Clear the client filter after using it once
+                st.session_state.client_filter = None
+            else:
+                search_term = st.text_input("Search clients", 
+                                           placeholder="Enter client name...")
         
         # Apply filters
         filtered_df = df[df['Stage'].isin(stage_filter)]
