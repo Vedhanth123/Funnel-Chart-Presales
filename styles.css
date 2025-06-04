@@ -1,0 +1,337 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header styles */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Button styles */
+.btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn.primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #2980b9;
+}
+
+.btn.secondary {
+  background-color: #ecf0f1;
+  color: #7f8c8d;
+}
+
+.btn.secondary:hover {
+  background-color: #dde4e6;
+}
+
+.btn i {
+  font-size: 0.9rem;
+}
+
+/* Dashboard layout */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2rem;
+}
+
+/* Funnel chart styles */
+.funnel-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+.funnel-container h2 {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+#funnelChart {
+  width: 100%;
+  height: 400px;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #3498db;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+/* Clients section styles */
+.clients-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.clients-container h2 {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.filter-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+#searchClient, #filterStage {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  flex: 1;
+}
+
+.client-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.client-item {
+  padding: 1rem;
+  border-bottom: 1px solid #ecf0f1;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.client-item:hover {
+  background-color: #f9f9f9;
+}
+
+.client-item:last-child {
+  border-bottom: none;
+}
+
+.client-info {
+  flex: 1;
+}
+
+.client-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.client-company {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.client-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.client-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.client-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7f8c8d;
+  transition: color 0.2s ease;
+}
+
+.client-actions button:hover {
+  color: #3498db;
+}
+
+/* Stage colors */
+.stage-research { background-color: #ecf0f1; color: #7f8c8d; }
+.stage-approached { background-color: #e8f4fd; color: #3498db; }
+.stage-first-presentation { background-color: #eafaf1; color: #27ae60; }
+.stage-interested { background-color: #e5f9e0; color: #2ecc71; }
+.stage-multiple-presentations { background-color: #d5f5e3; color: #27ae60; }
+.stage-proposal { background-color: #fef9e7; color: #f1c40f; }
+.stage-negotiation { background-color: #fcf3cf; color: #f39c12; }
+.stage-order { background-color: #fdedec; color: #e74c3c; }
+.stage-closed { background-color: #f2f4f4; color: #2c3e50; }
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background-color: white;
+  margin: 5% auto;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+  animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+}
+
+.modal h2 {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .funnel-container {
+    order: 1;
+  }
+  
+  .clients-container {
+    order: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .stats-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

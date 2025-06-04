@@ -1,0 +1,23 @@
+{
+  "name": "presales-funnel-dashboard",
+  "version": "1.0.0",
+  "description": "An interactive pre-sales funnel visualization dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "sales",
+    "funnel",
+    "presales",
+    "dashboard",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
